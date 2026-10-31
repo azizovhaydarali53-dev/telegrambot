@@ -13,7 +13,11 @@ except ImportError:
     from .keep_alive import keep_alive, set_health_state
 
 BOT_TOKEN = os.environ.get("BOT_TOKEN", "").strip()
-ADMIN_ID = int(os.environ.get("ADMIN_ID", "8830786343"))
+ADMIN_IDS = [
+    int(x)
+    for x in os.environ.get("ADMIN_IDS", os.environ.get("ADMIN_ID", "8830786343")).replace(" ", "").split(",")
+    if x
+]
 DEFAULT_INSTAGRAM_URL = "https://www.instagram.com/multiklaar?igsh=MzQ3Z2dub3cyejV5&utm_source=qr"
 INSTAGRAM_CHANNEL_URL = os.environ.get("INSTAGRAM_CHANNEL_URL", "").strip() or DEFAULT_INSTAGRAM_URL
 
@@ -648,7 +652,7 @@ async def send_subscription_prompt(message, channels):
 
 def get_movie_reply_markup(code, user_id=None):
     rows = []
-    if user_id is not None and user_id != ADMIN_ID:
+    if user_id is not None and user_id not in ADMIN_IDS:
         try:
             in_fav = is_favorite(user_id, code)
         except Exception:
@@ -750,7 +754,7 @@ def track_user(user):
                     "username": user.username or "",
                     "first_name": user.first_name or "",
                     "last_name": user.last_name or "",
-                    "is_admin": user.id == ADMIN_ID,
+                    "is_admin": user.id in ADMIN_IDS,
                     "last_seen_at": int(time.time()),
                 }
             },
@@ -956,7 +960,7 @@ async def start(update, context):
     remember_user(update)
     user_id = update.message.from_user.id
 
-    if user_id == ADMIN_ID:
+    if user_id in ADMIN_IDS:
         await update.message.reply_text(
             "👋 Salom, Admin!\n\n"
             "📽 Kino qo'shish uchun video yoki fayl yuboring.",
@@ -992,7 +996,7 @@ async def admin_broadcast_start(update, context):
     global _broadcast_active
     remember_user(update)
     user_id = update.message.from_user.id
-    if user_id != ADMIN_ID:
+    if user_id not in ADMIN_IDS:
         return
 
     _broadcast_active = True
@@ -1005,7 +1009,7 @@ async def admin_broadcast_start(update, context):
 async def admin_broadcast_stop(update, context):
     global _broadcast_active
     user_id = update.message.from_user.id
-    if user_id != ADMIN_ID:
+    if user_id not in ADMIN_IDS:
         return
     _broadcast_active = False
     await update.message.reply_text(
@@ -1020,7 +1024,7 @@ async def admin_broadcast_stop_callback(update, context):
     if query is None:
         return
     await query.answer()
-    if update.effective_user.id != ADMIN_ID:
+    if update.effective_user.id not in ADMIN_IDS:
         return
     _broadcast_active = False
     await query.message.reply_text(
@@ -1035,7 +1039,7 @@ async def handle_admin_broadcast_message(update, context):
         return
 
     user_id = update.message.from_user.id
-    if user_id != ADMIN_ID:
+    if user_id not in ADMIN_IDS:
         return
 
     try:
@@ -1092,7 +1096,7 @@ async def handle_admin_broadcast_message(update, context):
 async def admin_help(update, context):
     remember_user(update)
     user_id = update.message.from_user.id
-    if user_id != ADMIN_ID:
+    if user_id not in ADMIN_IDS:
         return
 
     help_text = (
@@ -1132,7 +1136,7 @@ async def admin_help(update, context):
 async def admin_stat(update, context):
     remember_user(update)
     user_id = update.message.from_user.id
-    if user_id != ADMIN_ID:
+    if user_id not in ADMIN_IDS:
         return
 
     try:
@@ -1164,7 +1168,7 @@ async def admin_stat(update, context):
 async def handle_video(update, context):
     global _broadcast_active
     user_id = update.message.from_user.id
-    if user_id != ADMIN_ID:
+    if user_id not in ADMIN_IDS:
         return
 
     if _broadcast_active:
@@ -1211,7 +1215,7 @@ async def handle_video(update, context):
 async def handle_document(update, context):
     global _broadcast_active
     user_id = update.message.from_user.id
-    if user_id != ADMIN_ID:
+    if user_id not in ADMIN_IDS:
         return
 
     if _broadcast_active:
@@ -1511,7 +1515,7 @@ async def handle_folder_pick(update, context):
 async def jild_start(update, context):
     remember_user(update)
     user_id = update.message.from_user.id
-    if user_id != ADMIN_ID:
+    if user_id not in ADMIN_IDS:
         return ConversationHandler.END
 
     context.user_data["jild_codes"] = []
@@ -1654,7 +1658,7 @@ def get_channels_list_keyboard(channels):
 async def channel_add_start(update, context):
     remember_user(update)
     user_id = update.message.from_user.id
-    if user_id != ADMIN_ID:
+    if user_id not in ADMIN_IDS:
         return ConversationHandler.END
 
     await update.message.reply_text(
@@ -1748,7 +1752,7 @@ async def channel_get_forward(update, context):
 async def list_channels(update, context):
     remember_user(update)
     user_id = update.message.from_user.id
-    if user_id != ADMIN_ID:
+    if user_id not in ADMIN_IDS:
         return
 
     try:
@@ -1797,7 +1801,7 @@ async def handle_delete_channel_callback(update, context):
     if query is None:
         return
     await query.answer()
-    if update.effective_user.id != ADMIN_ID:
+    if update.effective_user.id not in ADMIN_IDS:
         return
 
     chat_id = int(query.data[len("del_channel:"):])
@@ -1868,7 +1872,7 @@ async def handle_chat_join_request(update, context):
 async def edit_start(update, context):
     remember_user(update)
     user_id = update.message.from_user.id
-    if user_id != ADMIN_ID:
+    if user_id not in ADMIN_IDS:
         return
     await update.message.reply_text("Tahrirlash uchun kino kodini kiriting:")
     return EDIT_KOD
@@ -1974,7 +1978,7 @@ async def edit_get_vaqt(update, context):
 
 async def delete_movie(update, context):
     user_id = update.message.from_user.id
-    if user_id != ADMIN_ID:
+    if user_id not in ADMIN_IDS:
         return
     if not context.args:
         await update.message.reply_text("Ishlatish: /delete <kod>")
@@ -2001,7 +2005,7 @@ async def delete_movie(update, context):
 async def delete_start(update, context):
     remember_user(update)
     user_id = update.message.from_user.id
-    if user_id != ADMIN_ID:
+    if user_id not in ADMIN_IDS:
         return ConversationHandler.END
     await update.message.reply_text(
         "O'chirish uchun kino kodini kiriting:",
@@ -2039,7 +2043,7 @@ async def delete_get_kod(update, context):
 
 async def show_user_count(update, context):
     user_id = update.message.from_user.id
-    if user_id != ADMIN_ID:
+    if user_id not in ADMIN_IDS:
         return
     if not context.args or context.args[0] != "777":
         await update.message.reply_text("Ishlatish: /foydalanuvchi 777")
@@ -2058,7 +2062,7 @@ async def show_user_count(update, context):
 async def list_series_ranges(update, context):
     remember_user(update)
     user_id = update.message.from_user.id
-    if user_id != ADMIN_ID:
+    if user_id not in ADMIN_IDS:
         return
 
     try:
@@ -2204,7 +2208,7 @@ def increment_view_count(code):
 async def admin_top_movies(update, context):
     remember_user(update)
     user_id = update.message.from_user.id
-    if user_id != ADMIN_ID:
+    if user_id not in ADMIN_IDS:
         return
 
     limit = 20
@@ -2266,12 +2270,12 @@ async def handle_message(update, context):
     user_id = update.message.from_user.id
     text = update.message.text.strip()
 
-    if user_id == ADMIN_ID and _broadcast_active:
+    if user_id in ADMIN_IDS and _broadcast_active:
         await handle_admin_broadcast_message(update, context)
         return
 
     # Admin tugma shortcut lari (konversatsiyaga kirmaydiganlari)
-    if user_id == ADMIN_ID:
+    if user_id in ADMIN_IDS:
         if text == "📋 Seriallar":
             await list_series_ranges(update, context)
             return
@@ -2294,7 +2298,7 @@ async def handle_message(update, context):
             await admin_help(update, context)
             return
 
-    if user_id != ADMIN_ID:
+    if user_id not in ADMIN_IDS:
         try:
             unsubscribed = await get_unsubscribed_channels(context.bot, user_id)
         except Exception:
@@ -2377,26 +2381,27 @@ async def setup_bot_commands(app):
             ],
             scope=BotCommandScopeDefault(),
         )
-        await app.bot.set_my_commands(
-            [
-                BotCommand("start", "Botni ishga tushirish"),
-                BotCommand("edit", "Kino ma'lumotlarini tahrirlash"),
-                BotCommand("delete", "Kino o'chirish (/delete <kod>)"),
-                BotCommand("jild", "Yangi jild yaratish"),
-                BotCommand("seriallist", "Serial diapazonlarini ko'rish"),
-                BotCommand("kanal", "Majburiy obuna kanali qo'shish"),
-                BotCommand("kanallar", "Kanallar ro'yxati va o'chirish"),
-                BotCommand("kanallarim", "Bizning kanallarimiz"),
-                BotCommand("stat", "Bot statistikasi"),
-                BotCommand("top", "Eng ko'p ko'rilgan kinolar"),
-                BotCommand("foydalanuvchi", "Foydalanuvchilar soni"),
-                BotCommand("adminlik", "Ommaviy xabar yuborish"),
-                BotCommand("adminlikni_toxtatish", "Ommaviy xabarni to'xtatish"),
-                BotCommand("sevimli", "Sevimlilar ro'yxati"),
-                BotCommand("help", "Yordam"),
-            ],
-            scope=BotCommandScopeChat(ADMIN_ID),
-        )
+        for admin_id in ADMIN_IDS:
+            await app.bot.set_my_commands(
+                [
+                    BotCommand("start", "Botni ishga tushirish"),
+                    BotCommand("edit", "Kino ma'lumotlarini tahrirlash"),
+                    BotCommand("delete", "Kino o'chirish (/delete <kod>)"),
+                    BotCommand("jild", "Yangi jild yaratish"),
+                    BotCommand("seriallist", "Serial diapazonlarini ko'rish"),
+                    BotCommand("kanal", "Majburiy obuna kanali qo'shish"),
+                    BotCommand("kanallar", "Kanallar ro'yxati va o'chirish"),
+                    BotCommand("kanallarim", "Bizning kanallarimiz"),
+                    BotCommand("stat", "Bot statistikasi"),
+                    BotCommand("top", "Eng ko'p ko'rilgan kinolar"),
+                    BotCommand("foydalanuvchi", "Foydalanuvchilar soni"),
+                    BotCommand("adminlik", "Ommaviy xabar yuborish"),
+                    BotCommand("adminlikni_toxtatish", "Ommaviy xabarni to'xtatish"),
+                    BotCommand("sevimli", "Sevimlilar ro'yxati"),
+                    BotCommand("help", "Yordam"),
+                ],
+                scope=BotCommandScopeChat(admin_id),
+            )
     except Exception:
         logger.exception("Bot buyruqlar menyusini sozlashda xato yuz berdi")
 
@@ -2411,19 +2416,19 @@ def build_application():
 
     conv = ConversationHandler(
         entry_points=[
-            MessageHandler(filters.VIDEO & filters.User(ADMIN_ID), handle_video),
-            MessageHandler(filters.Document.ALL & filters.User(ADMIN_ID), handle_document),
+            MessageHandler(filters.VIDEO & filters.User(ADMIN_IDS), handle_video),
+            MessageHandler(filters.Document.ALL & filters.User(ADMIN_IDS), handle_document),
         ],
         states={
-            KOD_VAQT: [MessageHandler(filters.TEXT & ~filters.COMMAND & filters.User(ADMIN_ID), get_kod_vaqt)],
-            NOM: [MessageHandler(filters.TEXT & ~filters.COMMAND & filters.User(ADMIN_ID), get_nom)],
-            SIFAT: [MessageHandler(filters.TEXT & ~filters.COMMAND & filters.User(ADMIN_ID), get_sifat)],
-            TIL: [MessageHandler(filters.TEXT & ~filters.COMMAND & filters.User(ADMIN_ID), get_til)],
-            VAQT: [MessageHandler(filters.TEXT & ~filters.COMMAND & filters.User(ADMIN_ID), get_vaqt)],
-            CONFIRM: [MessageHandler(filters.TEXT & ~filters.COMMAND & filters.User(ADMIN_ID), confirm_save)],
-            FOLDER_CHOICE: [MessageHandler(filters.TEXT & ~filters.COMMAND & filters.User(ADMIN_ID), handle_folder_choice)],
-            FOLDER_CREATE: [MessageHandler(filters.TEXT & ~filters.COMMAND & filters.User(ADMIN_ID), handle_folder_create)],
-            FOLDER_PICK: [MessageHandler(filters.TEXT & ~filters.COMMAND & filters.User(ADMIN_ID), handle_folder_pick)],
+            KOD_VAQT: [MessageHandler(filters.TEXT & ~filters.COMMAND & filters.User(ADMIN_IDS), get_kod_vaqt)],
+            NOM: [MessageHandler(filters.TEXT & ~filters.COMMAND & filters.User(ADMIN_IDS), get_nom)],
+            SIFAT: [MessageHandler(filters.TEXT & ~filters.COMMAND & filters.User(ADMIN_IDS), get_sifat)],
+            TIL: [MessageHandler(filters.TEXT & ~filters.COMMAND & filters.User(ADMIN_IDS), get_til)],
+            VAQT: [MessageHandler(filters.TEXT & ~filters.COMMAND & filters.User(ADMIN_IDS), get_vaqt)],
+            CONFIRM: [MessageHandler(filters.TEXT & ~filters.COMMAND & filters.User(ADMIN_IDS), confirm_save)],
+            FOLDER_CHOICE: [MessageHandler(filters.TEXT & ~filters.COMMAND & filters.User(ADMIN_IDS), handle_folder_choice)],
+            FOLDER_CREATE: [MessageHandler(filters.TEXT & ~filters.COMMAND & filters.User(ADMIN_IDS), handle_folder_create)],
+            FOLDER_PICK: [MessageHandler(filters.TEXT & ~filters.COMMAND & filters.User(ADMIN_IDS), handle_folder_pick)],
         },
         fallbacks=[CommandHandler("cancel", cancel)],
     )
@@ -2431,24 +2436,24 @@ def build_application():
     edit_conv = ConversationHandler(
         entry_points=[
             CommandHandler("edit", edit_start),
-            MessageHandler(filters.Regex("^✏️ Tahrirlash$") & filters.User(ADMIN_ID), edit_start),
+            MessageHandler(filters.Regex("^✏️ Tahrirlash$") & filters.User(ADMIN_IDS), edit_start),
         ],
         states={
-            EDIT_KOD: [MessageHandler(filters.TEXT & ~filters.COMMAND & filters.User(ADMIN_ID), edit_get_kod)],
-            EDIT_NOM: [MessageHandler(filters.TEXT & ~filters.COMMAND & filters.User(ADMIN_ID), edit_get_nom)],
-            EDIT_SIFAT: [MessageHandler(filters.TEXT & ~filters.COMMAND & filters.User(ADMIN_ID), edit_get_sifat)],
-            EDIT_TIL: [MessageHandler(filters.TEXT & ~filters.COMMAND & filters.User(ADMIN_ID), edit_get_til)],
-            EDIT_VAQT: [MessageHandler(filters.TEXT & ~filters.COMMAND & filters.User(ADMIN_ID), edit_get_vaqt)],
+            EDIT_KOD: [MessageHandler(filters.TEXT & ~filters.COMMAND & filters.User(ADMIN_IDS), edit_get_kod)],
+            EDIT_NOM: [MessageHandler(filters.TEXT & ~filters.COMMAND & filters.User(ADMIN_IDS), edit_get_nom)],
+            EDIT_SIFAT: [MessageHandler(filters.TEXT & ~filters.COMMAND & filters.User(ADMIN_IDS), edit_get_sifat)],
+            EDIT_TIL: [MessageHandler(filters.TEXT & ~filters.COMMAND & filters.User(ADMIN_IDS), edit_get_til)],
+            EDIT_VAQT: [MessageHandler(filters.TEXT & ~filters.COMMAND & filters.User(ADMIN_IDS), edit_get_vaqt)],
         },
         fallbacks=[CommandHandler("cancel", cancel)],
     )
 
     delete_conv = ConversationHandler(
         entry_points=[
-            MessageHandler(filters.Regex("^🗑 O'chirish$") & filters.User(ADMIN_ID), delete_start),
+            MessageHandler(filters.Regex("^🗑 O'chirish$") & filters.User(ADMIN_IDS), delete_start),
         ],
         states={
-            DELETE_KOD: [MessageHandler(filters.TEXT & ~filters.COMMAND & filters.User(ADMIN_ID), delete_get_kod)],
+            DELETE_KOD: [MessageHandler(filters.TEXT & ~filters.COMMAND & filters.User(ADMIN_IDS), delete_get_kod)],
         },
         fallbacks=[CommandHandler("cancel", cancel)],
     )
@@ -2456,11 +2461,11 @@ def build_application():
     jild_conv = ConversationHandler(
         entry_points=[
             CommandHandler("jild", jild_start),
-            MessageHandler(filters.Regex("^📁 Jild$") & filters.User(ADMIN_ID), jild_start),
+            MessageHandler(filters.Regex("^📁 Jild$") & filters.User(ADMIN_IDS), jild_start),
         ],
         states={
-            JILD_CODES: [MessageHandler(filters.TEXT & ~filters.COMMAND & filters.User(ADMIN_ID), jild_get_codes)],
-            JILD_NAME: [MessageHandler(filters.TEXT & ~filters.COMMAND & filters.User(ADMIN_ID), jild_get_name)],
+            JILD_CODES: [MessageHandler(filters.TEXT & ~filters.COMMAND & filters.User(ADMIN_IDS), jild_get_codes)],
+            JILD_NAME: [MessageHandler(filters.TEXT & ~filters.COMMAND & filters.User(ADMIN_IDS), jild_get_name)],
         },
         fallbacks=[CommandHandler("cancel", cancel)],
     )
@@ -2468,11 +2473,11 @@ def build_application():
     channel_conv = ConversationHandler(
         entry_points=[
             CommandHandler("kanal", channel_add_start),
-            MessageHandler(filters.Regex("^➕ Kanal qo'shish$") & filters.User(ADMIN_ID), channel_add_start),
+            MessageHandler(filters.Regex("^➕ Kanal qo'shish$") & filters.User(ADMIN_IDS), channel_add_start),
         ],
         states={
-            CHANNEL_TYPE: [MessageHandler(filters.TEXT & ~filters.COMMAND & filters.User(ADMIN_ID), channel_get_type)],
-            CHANNEL_FORWARD: [MessageHandler(~filters.COMMAND & filters.User(ADMIN_ID), channel_get_forward)],
+            CHANNEL_TYPE: [MessageHandler(filters.TEXT & ~filters.COMMAND & filters.User(ADMIN_IDS), channel_get_type)],
+            CHANNEL_FORWARD: [MessageHandler(~filters.COMMAND & filters.User(ADMIN_IDS), channel_get_forward)],
         },
         fallbacks=[CommandHandler("cancel", cancel)],
     )
@@ -2504,7 +2509,7 @@ def build_application():
             | filters.Sticker.ALL
             | filters.VIDEO_NOTE
             | filters.ANIMATION
-        ) & filters.User(ADMIN_ID),
+        ) & filters.User(ADMIN_IDS),
         handle_admin_broadcast_message,
     ))
 
